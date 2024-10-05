@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Author List</title>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+
+<h1>Author List</h1>
+<table id="authorTable" class="display">
+    <thead>
+    <tr>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Date of Birth</th>
+        <th>Date of Death</th>
+        <th>Email</th>
+        <th>Nationality</th>
+        <th>Created At</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Data will be populated by DataTables via AJAX -->
+    </tbody>
+</table>
+
+<script>
+    $(document).ready(function () {
+        let typingTimer;
+        const doneTypingInterval = 2000; // time in ms
+
+        const table = $('#authorTable').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                "url": "/v1/apis/authors/",
+                "type": "GET",
+                "data": function (d) {
+                    d.page = (d.start / d.length) + 1;  // Convert DataTables start to DRF page
+                    d.page_size = d.length;  // Set page_size for DRF
+                    d.ordering = d.order.map(o => o.column + ' ' + o.dir).join(','); // Add ordering
+                },
+                "dataSrc": function (json) {
+                    json.draw = json.draw || 1;  // Ensure draw is present
+                    return json.data;  // Ensure data array is passed to DataTables
+                }
+            },
+            "columns": [
+                {"data": "first_name"},
+                {"data": "last_name"},
+                {"data": "date_of_birth"},
+                {"data": "date_of_death"},
+                {"data": "email"},
+                {"data": "nationality"},
+                {"data": "created_at"}
+            ],
+            "paging": true,
+            "ordering": true,
+            "searching": true,
+            "pageLength": 10
+        });
+
+        // Apply the debounce function for search
+        $('#authorTable input').unbind();
+        $('#authorTable input').bind('input', function () {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(function () {
+                table.search($('#authorTable input').val()).draw();
+            }, doneTypingInterval);
+        });
+    });
+
+</script>
+
+</body>
+</html>
